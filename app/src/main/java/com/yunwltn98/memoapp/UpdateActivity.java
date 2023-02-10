@@ -5,7 +5,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.app.DatePickerDialog;
 import android.app.ProgressDialog;
 import android.app.TimePickerDialog;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
@@ -17,12 +16,9 @@ import android.widget.Toast;
 
 import com.yunwltn98.memoapp.api.MemoApi;
 import com.yunwltn98.memoapp.api.NetworkClient;
-import com.yunwltn98.memoapp.api.UserApi;
 import com.yunwltn98.memoapp.config.Config;
 import com.yunwltn98.memoapp.model.Memo;
-import com.yunwltn98.memoapp.model.MemoList;
 import com.yunwltn98.memoapp.model.Res;
-import com.yunwltn98.memoapp.model.User;
 
 import java.util.Calendar;
 
@@ -31,7 +27,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 
-public class AddActivity extends AppCompatActivity {
+public class UpdateActivity extends AppCompatActivity {
 
     EditText editTitle;
     EditText editContent;
@@ -41,19 +37,30 @@ public class AddActivity extends AppCompatActivity {
     String Date = "";
     String Time = "";
     private ProgressDialog dialog;
-    Memo memo;
-
+    int memoId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_add);
+        setContentView(R.layout.activity_update);
 
         editTitle = findViewById(R.id.editTitle);
         editContent = findViewById(R.id.editContent);
         btnDate = findViewById(R.id.btnDate);
         btnTime = findViewById(R.id.btnTime);
         btnSave = findViewById(R.id.btnSave);
+
+        Memo memo = (Memo) getIntent().getSerializableExtra("memo");
+
+        memoId = memo.getId();
+        editTitle.setText(memo.getTitle());
+        editContent.setText(memo.getContent());
+        String datetime = memo.getDatetime().replace("T", " ").substring(0,15+1);
+        Date = datetime.substring(0,9+1);
+        btnDate.setText(Date);
+        Time = datetime.substring(11,15+1);
+        btnTime.setText(Time);
+
 
         btnDate.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -64,7 +71,7 @@ public class AddActivity extends AppCompatActivity {
                 int m = current.get(Calendar.MONTH);
                 int d = current.get(Calendar.DAY_OF_MONTH);
 
-                DatePickerDialog datePickerDialog = new DatePickerDialog(AddActivity.this, new DatePickerDialog.OnDateSetListener() {
+                DatePickerDialog datePickerDialog = new DatePickerDialog(UpdateActivity.this, new DatePickerDialog.OnDateSetListener() {
                     @Override
                     public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
                         // 월은 0이 1월이기때문에 +1해서 사용해준다
@@ -97,7 +104,7 @@ public class AddActivity extends AppCompatActivity {
                 int h = current.get(Calendar.HOUR_OF_DAY);
                 int m = current.get(Calendar.MINUTE);
 
-                TimePickerDialog timePickerDialog = new TimePickerDialog(AddActivity.this, new TimePickerDialog.OnTimeSetListener() {
+                TimePickerDialog timePickerDialog = new TimePickerDialog(UpdateActivity.this, new TimePickerDialog.OnTimeSetListener() {
                     @Override
                     public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
 
@@ -131,48 +138,44 @@ public class AddActivity extends AppCompatActivity {
                 String content = editContent.getText().toString().trim();
 
                 if (Date.isEmpty() || Time.isEmpty()) {
-                    Toast.makeText(AddActivity.this, "날짜와 시간을 선택해주세요", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(UpdateActivity.this, "날짜와 시간을 선택해주세요", Toast.LENGTH_SHORT).show();
                     return;
                 }
                 if (title.isEmpty() || content.isEmpty()) {
-                    Toast.makeText(AddActivity.this, "타이틀과 내용은 필수입니다", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(UpdateActivity.this, "타이틀과 내용은 필수입니다", Toast.LENGTH_SHORT).show();
                     return;
                 }
 
                 // 포스팅 API 호출
-                showProgress("메모 생성중..");
+                showProgress("메모 수정중..");
 
-                Retrofit retrofit = NetworkClient.getRetrofitClient(AddActivity.this);
+                Retrofit retrofit = NetworkClient.getRetrofitClient(UpdateActivity.this);
                 MemoApi api = retrofit.create(MemoApi.class);
 
                 SharedPreferences sp = getSharedPreferences(Config.PREFERENCE_NAME, MODE_PRIVATE);
                 String accessToken = sp.getString(Config.ACCESS_TOKEN, "");
 
-                memo = new Memo(title, datetime, content);
-                Call<Res> call = api.addMemo("Bearer " + accessToken, memo);
+                Memo memo = new Memo(title, datetime, content);
+                Call<Res> call = api.updateMemo(memoId, "Bearer " + accessToken, memo);
                 call.enqueue(new Callback<Res>() {
                     @Override
                     public void onResponse(Call<Res> call, Response<Res> response) {
                         dismissProgress();
                         if (response.isSuccessful()) {
-                            Toast.makeText(AddActivity.this, "저장되었습니다", Toast.LENGTH_SHORT).show();
-
+                            Toast.makeText(UpdateActivity.this, "저장되었습니다", Toast.LENGTH_SHORT).show();
                             finish();
-
                         } else {
-                            Toast.makeText(AddActivity.this, "정상동작하지 않습니다", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(UpdateActivity.this, "정상동작하지 않습니다", Toast.LENGTH_SHORT).show();
                             return;
                         }
                     }
-
                     @Override
                     public void onFailure(Call<Res> call, Throwable t) {
                         dismissProgress();
-                        Toast.makeText(AddActivity.this, "정상동작하지 않습니다", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(UpdateActivity.this, "정상동작하지 않습니다", Toast.LENGTH_SHORT).show();
 
                     }
                 });
-
             }
         });
 
