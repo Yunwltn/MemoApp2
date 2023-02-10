@@ -111,35 +111,9 @@ public class MemoAdapter extends RecyclerView.Adapter<MemoAdapter.ViewHolder> {
                     builder.setPositiveButton("YES", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialogInterface, int i) {
-                            // 삭제로직
-                            Memo memo = memoArrayList.get(deleteIndex);
-                            int memoId = memo.getId();
 
-                            Retrofit retrofit = NetworkClient.getRetrofitClient(context);
-                            MemoApi api = retrofit.create(MemoApi.class);
-
-                            SharedPreferences sp = context.getSharedPreferences(Config.PREFERENCE_NAME, Context.MODE_PRIVATE);
-                            String accessToken = sp.getString(Config.ACCESS_TOKEN, "");
-
-                            Call<Res> call = api.deleteMemo(memoId, "Bearer " + accessToken);
-                            call.enqueue(new Callback<Res>() {
-                                @Override
-                                public void onResponse(Call<Res> call, Response<Res> response) {
-                                    if (response.isSuccessful()) {
-                                        Toast.makeText(context, "삭제되었습니다", Toast.LENGTH_SHORT).show();
-                                        memoArrayList.remove(deleteIndex);
-                                        notifyDataSetChanged();
-
-                                    } else {
-                                        Toast.makeText(context, "정상동작하지 않습니다", Toast.LENGTH_SHORT).show();
-                                        return;
-                                    }
-                                }
-                                @Override
-                                public void onFailure(Call<Res> call, Throwable t) {
-                                    Toast.makeText(context, "정상동작하지 않습니다", Toast.LENGTH_SHORT).show();
-                                }
-                            });
+                            int index = getAdapterPosition();
+                            ((MainActivity)context).deleteMemo(index);
                         }
                     });
                     builder.setNegativeButton("NO", null);

@@ -55,10 +55,10 @@ public class UpdateActivity extends AppCompatActivity {
         memoId = memo.getId();
         editTitle.setText(memo.getTitle());
         editContent.setText(memo.getContent());
-        String datetime = memo.getDatetime().replace("T", " ").substring(0,15+1);
-        Date = datetime.substring(0,9+1);
+        String[] datetime = memo.getDatetime().substring(0,15+1).split("T");
+        Date = datetime[0];
         btnDate.setText(Date);
-        Time = datetime.substring(11,15+1);
+        Time = datetime[1];
         btnTime.setText(Time);
 
 

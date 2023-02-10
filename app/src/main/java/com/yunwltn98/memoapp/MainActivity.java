@@ -28,6 +28,7 @@ import com.yunwltn98.memoapp.api.UserApi;
 import com.yunwltn98.memoapp.config.Config;
 import com.yunwltn98.memoapp.model.Memo;
 import com.yunwltn98.memoapp.model.MemoList;
+import com.yunwltn98.memoapp.model.Res;
 import com.yunwltn98.memoapp.model.UserRes;
 
 import java.util.ArrayList;
@@ -51,6 +52,7 @@ public class MainActivity extends AppCompatActivity {
     int offset = 0;
     int limit = 7;
     int count = 0;
+    int deleteIndex;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -266,5 +268,35 @@ public class MainActivity extends AppCompatActivity {
     // 로직처리가 끝나면 화면에서 사라지는 함수
     void dismissProgress() {
         dialog.dismiss();
+    }
+    public void deleteMemo(int index) {
+        deleteIndex = index;
+        Retrofit retrofit = NetworkClient.getRetrofitClient(MainActivity.this);
+        MemoApi api = retrofit.create(MemoApi.class);
+        Memo memo = memoArrayList.get(index);
+
+        SharedPreferences sp = getSharedPreferences(Config.PREFERENCE_NAME, MODE_PRIVATE);
+        String accessToken = sp.getString(Config.ACCESS_TOKEN, "");
+
+        Call<Res> call = api.deleteMemo(memo.getId(), "Bearer " + accessToken);
+        call.enqueue(new Callback<Res>() {
+            @Override
+            public void onResponse(Call<Res> call, Response<Res> response) {
+                if (response.isSuccessful()) {
+                    Toast.makeText(MainActivity.this, "삭제되었습니다", Toast.LENGTH_SHORT).show();
+                    memoArrayList.remove(deleteIndex);
+                    adapter.notifyDataSetChanged();
+
+                } else {
+                    Toast.makeText(MainActivity.this, "정상동작하지 않습니다", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Res> call, Throwable t) {
+                Toast.makeText(MainActivity.this, "정상동작하지 않습니다", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 }
